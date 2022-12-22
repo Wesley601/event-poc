@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  api:
+    container_name: poc_api
+    build:
+      context: .
+      target: dev
+      dockerfile: ./build/api/Dockerfile
+    ports:
+      - 3000:8080
+    networks:
+      - poc-network
+    volumes:
+      - ./:/app/
+    restart: unless-stopped
+    depends_on:
+      - nats
+  web:
+    container_name: poc_web
+    build:
+      context: .
+      dockerfile: ./build/web/Dockerfile
+    ports:
+      - 5173:5173
+    networks:
+      - poc-network
+    volumes:
+      - ./web/:/app/
+    restart: unless-stopped
+  sse:
+    container_name: poc_sse
+    build:
+      context: .
+      target: dev
+      dockerfile: ./build/sse/Dockerfile
+    ports:
+      - 3001:8080
+    networks:
+      - poc-network
+    volumes:
+      - ./:/app/
+    restart: unless-stopped
+    depends_on:
+      - nats
+  nats:
+    container_name: poc_nats
+    image: nats
+    ports:
+      - "8222:8222"
+    command: "--cluster_name NATS --cluster nats://0.0.0.0:6222 --http_port 8222 "
+    networks:
+      - poc-network
+networks:
+  poc-network:
+    driver: bridge
