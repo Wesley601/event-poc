@@ -42,6 +42,8 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Content-Type", "application/json")
 
 			json.NewEncoder(w).Encode(users)
 		}

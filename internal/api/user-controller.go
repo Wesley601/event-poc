@@ -31,10 +31,17 @@ func (uc *UserController) CreateUser(user User) error {
 		return err
 	}
 
-	_, err = stmt.Exec(user.Name, user.Status)
+	res, err := stmt.Exec(user.Name, user.Status)
 	if err != nil {
 		return err
 	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	user.ID = id
 
 	payload, err := json.Marshal(user)
 	if err != nil {

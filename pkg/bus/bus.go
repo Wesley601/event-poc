@@ -33,7 +33,7 @@ func (e *EventBusImpl) Publish(topic string, payload []byte) error {
 func (e *EventBusImpl) Subscribe(topic string) (ch chan *nats.Msg, err error) {
 	// Channel Subscriber
 	ch = make(chan *nats.Msg)
-	e.sub, err = e.nc.ChanSubscribe("foo", ch)
+	e.sub, err = e.nc.ChanSubscribe(topic, ch)
 
 	if err != nil {
 		return nil, err

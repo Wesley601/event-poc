@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"wesley601/event-driver/internal/sse"
 	"wesley601/event-driver/pkg/bus"
 )
 
@@ -12,18 +13,34 @@ type Percent struct {
 }
 
 func main() {
+	eBus, err := bus.New()
+	if err != nil {
+		panic(err)
+	}
+	defer eBus.Close()
+
+	// get broker
+	bk := sse.New()
+
 	http.HandleFunc("/progress", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("connected!")
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
 			return
 		}
 
-		eBus, err := bus.New()
-		if err != nil {
-			panic(err)
-		}
-		defer eBus.Close()
+		// Each connection registers its own message channel with the broker's connections registry
+		messageChan := make(chan []byte)
+
+		// Signal the broker that we have a new Connection
+		bk.NewClients <- messageChan
+
+		// Remove this client from the map of connected clients
+		// when this handler exits.
+		defer func() {
+			bk.ClosingClients <- messageChan
+		}()
 
 		ch, err := eBus.Subscribe("user.created")
 		if err != nil {
@@ -37,8 +54,9 @@ func main() {
 		flusher.Flush()
 
 		for msg := range ch {
+			fmt.Println("message recived")
 			w.Write([]byte("event: userCreated\n"))
-			w.Write([]byte(fmt.Sprintf("data: %s\n", msg.Data)))
+			w.Write([]byte(fmt.Sprintf("data: %s\n", <-messageChan)))
 			w.Write([]byte("\n"))
 			flusher.Flush()
 		}
