@@ -16,7 +16,7 @@ RUN go install github.com/cosmtrek/air@latest
 
 CMD ["air", "-c", "build/api/.air.toml"]
 
-FROM gcr.io/distroless/base-debian10 as prod
+FROM gcr.io/distroless/static-debian11 as prod
 
 WORKDIR /
 
